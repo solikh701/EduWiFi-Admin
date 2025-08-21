@@ -1,127 +1,192 @@
-let page = 1, limit = 20, sort = "id", order = "desc", q = "";
+// admin_panel_monitoring.js
+let page = 1;
+let limit = 20;
+let sort = 'id';
+let order = 'desc';
+let q = '';
 let totalPages = 1;
+let searchTimer = null;
 
+// API dan sahifani yuklash
 async function loadMonitoring() {
   try {
     const params = new URLSearchParams({ page, limit, sort, order });
-    if (q) params.set("search", q);
+    if (q) params.set('search', q);
 
     const res = await fetch(`/api/monitoring?${params.toString()}`);
-    if (!res.ok) throw new Error("Server error: " + res.status);
+    if (!res.ok) throw new Error('Server error: ' + res.status);
 
     const data = await res.json();
 
-    document.getElementById("monitoringCount").textContent = data.total;
+    // hisoblagich
+    document.getElementById('monitoringCount').textContent = data.total ?? 0;
     totalPages = data.pages || 1;
 
-    const tbody = document.getElementById("monitoringBody");
-    tbody.innerHTML = (data.items || []).map(r => `
-      <tr class="hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-        <td class="px-3 py-2">${r.id}</td>
-        <td class="px-3 py-2">${r.ts}</td>
-        <td class="px-3 py-2">${r.client_ip}</td>
-        <td class="px-3 py-2">${(r.mac || "-").toUpperCase()}</td>
-        <td class="px-3 py-2">${r.hostname || "-"}</td>
-        <td class="px-3 py-2">${r.domain || "-"}</td>
-        <td class="px-3 py-2">${r.protocol}</td>
-        <td class="px-3 py-2">${r.uid}</td>
-      </tr>
-    `).join("");
+    // jadval
+    const tbody = document.getElementById('monitoringBody');
+    const items = data.items || [];
 
+    if (items.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="8" class="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+          Ma'lumot topilmadi
+        </td></tr>`;
+    } else {
+      tbody.innerHTML = items.map(r => `
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition">
+          <td class="px-3 py-2">${r.id ?? ''}</td>
+          <td class="px-3 py-2">${r.ts ?? ''}</td>
+          <td class="px-3 py-2">${r.client_ip ?? ''}</td>
+          <td class="px-3 py-2">${(r.mac ?? '-').toString().toUpperCase()}</td>
+          <td class="px-3 py-2">${r.hostname ?? '-'}</td>
+          <td class="px-3 py-2">${r.domain ?? '-'}</td>
+          <td class="px-3 py-2">${r.protocol ?? ''}</td>
+          <td class="px-3 py-2">${r.uid ?? ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    // pastdagi boshqaruvlar
     renderPagination();
     updateSortArrows();
+
+    // URL holatini yangilash (ixtiyoriy, foydali)
+    const urlParams = new URLSearchParams();
+    urlParams.set('page', page);
+    urlParams.set('limit', limit);
+    urlParams.set('sort', sort);
+    urlParams.set('order', order);
+    if (q) urlParams.set('search', q);
+    history.replaceState(null, '', `/admin_panel_monitoring?${urlParams.toString()}`);
   } catch (err) {
-    console.error("Error loading monitoring:", err);
+    console.error('Error loading monitoring:', err);
+    // xatoni foydalanuvchiga ko'rsatish (xohlasangiz)
+    // alert('Ma\'lumot yuklashda xatolik.');
   }
 }
 
+// Pagination rendering
 function renderPagination() {
-  const container = document.getElementById("paginationButtons");
-  container.innerHTML = "";
+  const container = document.getElementById('paginationButtons');
+  container.innerHTML = '';
 
-  function makeBtn(text, disabled, onclick, active=false) {
-    const cls = `px-3 py-1 rounded-lg mx-1 ${
-      active ? "bg-indigo-500 text-white font-bold" : "bg-gray-200 dark:bg-gray-700 hover:bg-indigo-400 dark:hover:bg-indigo-600"
-    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
-    return `<button ${disabled ? "disabled" : ""} class="${cls}" onclick="${disabled?"":onclick}">${text}</button>`;
-  }
+  const mkBtn = (label, disabled, onClick, active = false) => {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.disabled = !!disabled;
+    btn.className = [
+      'px-3 py-1 rounded-lg mx-1',
+      active ? 'bg-indigo-500 text-white font-bold' : 'bg-gray-200 dark:bg-gray-700 hover:bg-indigo-400 dark:hover:bg-indigo-600',
+      disabled ? 'opacity-50 cursor-not-allowed' : ''
+    ].join(' ');
+    if (!disabled) btn.addEventListener('click', onClick);
+    return btn;
+  };
 
-  let html = "";
-  html += makeBtn("«", page === 1, `gotoPage(${page-1})`);
+  // « prev
+  container.appendChild(mkBtn('«', page === 1, () => gotoPage(page - 1)));
 
+  // pages
   if (totalPages <= 7) {
-    for (let i=1;i<=totalPages;i++) {
-      html += makeBtn(i, false, `gotoPage(${i})`, page===i);
+    for (let i = 1; i <= totalPages; i++) {
+      container.appendChild(mkBtn(String(i), false, () => gotoPage(i), i === page));
     }
   } else if (page <= 4) {
-    for (let i=1;i<=5;i++) {
-      html += makeBtn(i,false,`gotoPage(${i})`, page===i);
+    for (let i = 1; i <= 5; i++) {
+      container.appendChild(mkBtn(String(i), false, () => gotoPage(i), i === page));
     }
-    html += `<span class="px-2">...</span>`;
-    html += makeBtn(totalPages,false,`gotoPage(${totalPages})`);
-  } else if (page >= totalPages-3) {
-    html += makeBtn(1,false,`gotoPage(1)`);
-    html += `<span class="px-2">...</span>`;
-    for (let i=totalPages-4;i<=totalPages;i++) {
-      html += makeBtn(i,false,`gotoPage(${i})`, page===i);
+    container.appendChild(ellipsis());
+    container.appendChild(mkBtn(String(totalPages), false, () => gotoPage(totalPages)));
+  } else if (page >= totalPages - 3) {
+    container.appendChild(mkBtn('1', false, () => gotoPage(1)));
+    container.appendChild(ellipsis());
+    for (let i = totalPages - 4; i <= totalPages; i++) {
+      container.appendChild(mkBtn(String(i), false, () => gotoPage(i), i === page));
     }
   } else {
-    html += makeBtn(1,false,`gotoPage(1)`);
-    html += `<span class="px-2">...</span>`;
-    html += makeBtn(page-1,false,`gotoPage(${page-1})`);
-    html += makeBtn(page,false,`gotoPage(${page})`, true);
-    html += makeBtn(page+1,false,`gotoPage(${page+1})`);
-    html += `<span class="px-2">...</span>`;
-    html += makeBtn(totalPages,false,`gotoPage(${totalPages})`);
+    container.appendChild(mkBtn('1', false, () => gotoPage(1)));
+    container.appendChild(ellipsis());
+    container.appendChild(mkBtn(String(page - 1), false, () => gotoPage(page - 1)));
+    container.appendChild(mkBtn(String(page), false, () => gotoPage(page), true));
+    container.appendChild(mkBtn(String(page + 1), false, () => gotoPage(page + 1)));
+    container.appendChild(ellipsis());
+    container.appendChild(mkBtn(String(totalPages), false, () => gotoPage(totalPages)));
   }
 
-  html += makeBtn("»", page===totalPages, `gotoPage(${page+1})`);
+  // » next
+  container.appendChild(mkBtn('»', page === totalPages, () => gotoPage(page + 1)));
+}
 
-  container.innerHTML = html;
+function ellipsis() {
+  const span = document.createElement('span');
+  span.textContent = '...';
+  span.className = 'px-2 text-gray-500';
+  return span;
 }
 
 function gotoPage(p) {
-  if (p>=1 && p<=totalPages) {
+  if (p >= 1 && p <= totalPages) {
     page = p;
     loadMonitoring();
   }
 }
 
+// Sort-tirnoqlarni yangilash
 function updateSortArrows() {
-  document.querySelectorAll("#monitoringTable th.sort .sort-arrow").forEach(span => {
-    span.textContent = "⬍";
-  });
+  document.querySelectorAll('#monitoringTable th.sort .sort-arrow').forEach(el => el.textContent = '⬍');
   const active = document.querySelector(`#monitoringTable th.sort[data-sort="${sort}"] .sort-arrow`);
-  if (active) {
-    active.textContent = order==="asc" ? "▲" : "▼";
-  }
+  if (active) active.textContent = (order === 'asc' ? '▲' : '▼');
 }
 
-document.getElementById("searchInput").addEventListener("input", e=>{
-  q = e.target.value.trim();
-  page = 1;
-  loadMonitoring();
-});
+// === Event handlers ===
+document.addEventListener('DOMContentLoaded', () => {
+  // limit
+  const limitSel = document.getElementById('limitSelect');
+  if (limitSel) {
+    limitSel.value = String(limit);
+    limitSel.addEventListener('change', (e) => {
+      limit = parseInt(e.target.value, 10) || 20;
+      page = 1;
+      loadMonitoring();
+    });
+  }
 
-document.getElementById("limitSelect").addEventListener("change", e=>{
-  limit = parseInt(e.target.value,10) || 20;
-  page = 1;
-  loadMonitoring();
-});
+  // go to page
+  const goBtn = document.getElementById('goBtn');
+  const pageInput = document.getElementById('pageInput');
+  if (goBtn && pageInput) {
+    goBtn.addEventListener('click', () => {
+      const p = parseInt(pageInput.value, 10);
+      if (p >= 1 && p <= totalPages) gotoPage(p);
+    });
+  }
 
-document.getElementById("goBtn").addEventListener("click", ()=>{
-  const p = parseInt(document.getElementById("pageInput").value,10);
-  if (p>=1 && p<=totalPages) gotoPage(p);
-});
-
-document.querySelectorAll(".sort").forEach(th=>{
-  th.addEventListener("click", ()=>{
-    const s = th.dataset.sort;
-    if (sort===s) order = (order==="asc" ? "desc" : "asc");
-    else { sort = s; order = "asc"; }
-    page=1;
-    loadMonitoring();
+  // sort headers
+  document.querySelectorAll('#monitoringTable th.sort').forEach(th => {
+    th.addEventListener('click', () => {
+      const s = th.dataset.sort;
+      if (!s) return;
+      if (sort === s) order = (order === 'asc' ? 'desc' : 'asc');
+      else { sort = s; order = 'asc'; }
+      page = 1;
+      loadMonitoring();
+    });
   });
-});
 
-loadMonitoring();
+  // search (debounce)
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      const val = (e.target.value || '').trim();
+      searchTimer = setTimeout(() => {
+        q = val;
+        page = 1;
+        loadMonitoring();
+      }, 350);
+    });
+  }
+
+  // initial load
+  loadMonitoring();
+});
