@@ -1,4 +1,12 @@
+# Python cache
+__pycache__/
+**/__pycache__/
+
+# IDE configs
+.idea/
+**/.idea/
+
+# Environment
 .env
+
 venv
-__pycache__
-.idea
