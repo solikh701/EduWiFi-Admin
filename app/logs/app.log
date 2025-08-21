@@ -1,0 +1,5 @@
+2025-08-20 14:49:07 [ERROR] engineio.server - Invalid websocket upgrade (further occurrences of this error will be logged with level INFO)
+2025-08-20 14:49:20 [INFO] app.logging_config - [update_tarif_plans] Updated plan ID 1: price=Bepul, active=True, duration=15 minutes, rate=5M/5M
+2025-08-20 14:49:20 [INFO] app.logging_config - [update_tarif_plans] Updated plan ID 2: price=5 000 so'm, active=True, duration=1 day, rate=100M/100M
+2025-08-20 14:49:20 [INFO] app.logging_config - [update_tarif_plans] Updated plan ID 3: price=20 000 so'm, active=True, duration=1 week, rate=100M/100M
+2025-08-20 14:49:20 [INFO] app.logging_config - [update_tarif_plans] Updated plan ID 4: price=50 000 so'm, active=True, duration=2 month, rate=100M/100M

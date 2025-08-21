@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+.header-content {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+}
+
+.home-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 30px;
+    margin-left: 20px;
+}
+
+.divider {
+    border: none;
+    border-top: 2px solid #D7D7D7;
+    margin: 12px 0;
+}
+
+.user-info {
+    display: flex;
+    font-size: 14px;
+    align-items: center;
+}
+
+.user-info h2 {
+    margin: 0;
+    font-size: 24px;
+    color: black;
+    margin-right: 70px;
+}
+
+.user-info p {
+    margin-right: 60px;
+    color: #a19b9b;
+}
+
+.close-button {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: auto;
+    color: #C2C2C2;
+}
+
+.session-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    border-radius: 6px;
+    overflow: hidden;
+    table-layout: fixed;
+}
+
+.session-table th,
+.session-table td {
+    padding: 10px;
+    border: 1px solid #dddddd;
+    font-size: 14px;
+    border-right: 2px solid #ddd;
+}
+
+.session-table td {
+    border-right: 1px solid white;
+}
+
+.session-table th {
+    background-color: #f9f9f9;
+    font-weight: bold;
+    background-color: #EEEEEE;
+}
+
+thead {
+    background-color: #f4f4f4;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+thead th {
+    padding: 8px;
+    border-right: 2px solid #ddd;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+tbody {
+    display: block;
+    max-height: 100%; 
+    width: 100%;
+}
+
+tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    text-align: center;
+    color: #a19b9b;
+}
+
+tbody td {
+    text-align: center;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination-controls button {
+    background-color: #ffffff;
+    border: 1px solid #dddddd;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.pagination-controls button:hover {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+.next-page {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.next-page:hover {
+    background-color: #0056b3;
+}
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.pagination-info {
+    font-size: 14px;
+}
+
+.page-size, .go-to-page {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.page-size select, .go-to-page input {
+    margin: 0 5px;
+    padding: 3px;
+}
+
+.pagination-controls button,
+.go-to-page button {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+select {
+    padding: 5px;
+    margin-left: 10px;
+}

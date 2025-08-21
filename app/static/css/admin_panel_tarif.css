@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+.tarif-container {
+    width: 97%;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+.header-content {
+    margin-top: -45px;
+    display: flex;
+    align-items: center;
+}
+
+.home-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 30px;
+    margin-left: 20px;
+}
+
+h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.divider {
+    border: none;
+    border-top: 2px solid #D7D7D7;
+    margin: 20px 0;
+}
+
+.tarif-table {
+    margin-top: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+    /* optional: adjust width if you prefer */
+}
+
+.tarif-table th, .tarif-table td {
+    padding: 9px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.tarif-table thead {
+    background-color: #fff;
+}
+
+.tarif-table th {
+    font-weight: bold;
+    color: #757575;
+}
+
+.tarif-table input[type="text"] {
+    width: 130px;
+    padding: 5px;
+    font-size: 18px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    text-align: center;
+    background-color: #f7f7f7;
+    color: #3c3c3c;
+    margin: 2px 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: background-color 0.2s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease-in-out;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(34px);
+}
+
+.save-button {
+    display: block;
+    width: 140px;
+    margin: 30px auto 0 auto;
+    padding: 15px;
+    background-color: #ccffcc;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.5);
+}
+
+.save-button:hover {
+    background-color: #b3e0b3;
+}
+
+.success-message {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.success-message-box {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    font-size: 18px;
+    text-align: center;
+}

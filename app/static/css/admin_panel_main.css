@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #ffffff;
+    color: #000000;
+    border-bottom: 2px solid #D7D7D7;
+    padding-bottom: 18px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+    margin-left: 600px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-info .user {
+    margin-right: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.user-info .btn {
+    padding: 10px 20px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.user-info .oktam {
+    background-color: #FDFFB2;
+    color: #000;
+    font-size: 18px;
+}
+
+.user-info .chiqish {
+    background-color: #FE6363;
+    color: #ffffff;
+    border-radius: 50px;
+    font-size: 12px;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px;
+}
+
+.link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card {
+    width: 285px;
+    height: 170px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 181px;
+}
+
+.card img {
+    height: 35px;
+}
+
+.foydalanuvchilar {
+    background-color: #E6FFD2;
+    font-size: 22px;
+}
+
+.reklama {
+    background-color: #90E4FF;
+    font-size: 22px;
+}
+
+.tarif-rejalar {
+    background-color: #FFD8AA;
+    font-size: 22px;
+}
+
+.tolovlar {
+    background-color: #FFE4C4;
+    font-size: 22px;
+}
+
+.sozlamalar {
+    background-color: #D4AAFF;
+    font-size: 22px;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.confirmation-box {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    border-radius: 10px;
+    z-index: 11; 
+}
+
+.confirmation-box p {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.confirmation-buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.confirm-yes {
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 8px;
+}
+
+.confirm-yes:hover {
+    background-color: #dcdcdc;
+}
+
+.confirm-no {
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 8px;
+}
+
+.confirm-no:hover {
+    background-color: #dcdcdc;
+}
+
+.user-name {
+    background-color: #FDFFB2;
+    color: #000;
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-right: 10px;
+}

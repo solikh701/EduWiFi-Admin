@@ -1,0 +1,9 @@
+# Dashboard 
+cache.delete("dashboard:v1")
+
+# Teacher ma'lumotlari o'zgarsa 
+cache.delete_memoized(_teachers_list_data)
+cache.delete("teachers:universities:v1")
+
+# Tarif ma'lumotlari o'zgarsa 
+cache.delete("tariffs:plans:v1")

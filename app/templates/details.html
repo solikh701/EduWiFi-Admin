@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>User details</title>
+
+  <!-- Tailwind (+ forms) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>tailwind.config={darkMode:'class'};</script>
+
+  <!-- Boshlanishda dark rejimni qo'llash -->
+  <script>
+    if (localStorage.theme === 'dark' ||
+       (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script> tailwind.config = { darkMode: 'class' } </script>
+
+  <!-- MUHIM: aynan shu type bilan va @layer ichida -->
+  <style type="text/tailwindcss">
+    @layer components {
+      .badge{ @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold; }
+      .badge-green{ @apply bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200; }
+      .badge-red{ @apply bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100; }
+  
+      .card{ @apply bg-white dark:bg-gray-800 rounded-2xl shadow; }
+      .input-like{ @apply w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm; }
+      .field{ @apply space-y-1; }
+      .label{ @apply text-sm font-medium text-gray-600 dark:text-gray-300; }
+  
+      .btn{ @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold; }
+      .btn-primary{ @apply bg-indigo-600 hover:bg-indigo-700 text-white; }
+      .btn-danger{ @apply bg-red-600 hover:bg-red-700 text-white; }
+      .btn-soft{ @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100; }
+      .btn-success{ @apply bg-green-600 hover:bg-green-700 text-white; }
+      .btn-outline{ @apply border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700; }
+  
+      .hidden-el{ @apply hidden; }
+    }
+  </style>
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
+  <!-- Topbar -->
+  <header class="sticky top-0 z-40 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button id="backBtn" class="btn btn-soft">
+          <!-- back icon -->
+          <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Orqaga
+        </button>
+        <h1 id="titleId" class="text-xl md:text-2xl font-bold">User</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Dark/Light -->
+        <button id="themeToggle" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700" title="Tungi/yorug' rejim">
+          <svg class="w-6 h-6 text-gray-700 dark:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path id="themeIconPath" stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71-.71M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+          </svg>
+        </button>
+
+        <!-- User icon -->
+        <div class="relative">
+          <button id="profileBtn" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <svg class="w-6 h-6 text-gray-700 dark:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4"></path>
+            </svg>
+          </button>
+          <div id="profileMenu" class="absolute right-0 mt-2 w-44 card py-2 hidden">
+            <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600">Chiqish</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-7xl mx-auto p-5 md:p-8">
+    <!-- Top summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="card p-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Holat</div>
+          <div id="statusBadge" class="badge badge-green mt-1">AKTIV</div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-gray-500 dark:text-gray-400">So‘nggi avtorizatsiya</div>
+          <div id="lastAuthShort" class="font-semibold">—</div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-gray-500 dark:text-gray-400">Umumiy sessiyalar</div>
+        <div id="totalSessions" class="text-2xl font-bold mt-1">0</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-gray-500 dark:text-gray-400">Umumiy to‘langan summa</div>
+        <div id="totalPaid" class="text-2xl font-bold mt-1">0</div>
+      </div>
+    </div>
+
+    <!-- Details grid -->
+    <div class="card p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- left -->
+        <div class="space-y-4">
+          <div class="field">
+            <div class="label">SO'NGGI IP ADRES</div>
+            <input data-field="last_ip_address" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">MAC (o'zgartiriladi)</div>
+            <input data-field="MAC" class="input-like" type="text" id="macInput">
+          </div>
+          <div class="field">
+            <div class="label">Ilk ro'yxatdan o'tgan vaqti</div>
+            <input data-field="first_authorization" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Ismi sharifi</div>
+            <input data-field="fio" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Telefon raqami</div>
+            <input data-field="phone_number" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">SMS avtorizatsiya kodi</div>
+            <input data-field="confirmation_code" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Avtorizatsiya holati</div>
+            <input data-field="authorization_activeness" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Avtorizatsiyadan o'tgan vaqt</div>
+            <input data-field="last_authorization" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Avtorizatsiya muddati</div>
+            <input data-field="tariff_limit" class="input-like" type="text" readonly>
+          </div>
+        </div>
+
+        <!-- right -->
+        <div class="space-y-4">
+          <div class="field">
+            <div class="label">Role</div>
+            <input data-field="role" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Umumiy sessiyalar soni</div>
+            <input data-field="total_sessions" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Umumiy avtorizatsiyalar soni</div>
+            <input data-field="overall_authorizations" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">Umumiy to'langan summa</div>
+            <input data-field="overall_payed_sum" class="input-like" type="text" readonly>
+          </div>
+          <div class="field">
+            <div class="label">So'nggi tanlangan tarif</div>
+            <input data-field="selectedTariff" class="input-like" type="text" readonly>
+          </div>
+
+          <div class="field">
+            <div class="label">Blokirovka</div>
+            <button id="blockBtn" class="btn btn-danger w-full">Bloklanmagan</button>
+          </div>
+
+          <div class="field">
+            <div class="label">Avtorizatsiya muddatini qo'shish</div>
+            <button id="addTimeBtn" class="btn btn-success w-full">Vaqt tanlash</button>
+          </div>
+
+          <div class="field">
+            <div class="label">Kommentariyalar</div>
+            <input data-field="comment" class="input-like" type="text" placeholder="(ixtiyoriy)" readonly>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button id="sessionsBtn" class="btn btn-outline">
+          Barcha sessiyalar
+        </button>
+        <button id="deleteBtn" class="btn btn-danger">O'chirish</button>
+        <button id="unauthBtn" class="btn btn-danger">Avtorizatsiyadan olib tashlash</button>
+        <button id="exitBtn" class="btn btn-soft">Chiqish</button>
+
+        <button id="saveBtn" class="btn btn-success ml-auto hidden-el">Saqlash</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Confirm modal (block/delete/unauth) -->
+  <div id="confirmBackdrop" class="fixed inset-0 bg-black/40 hidden"></div>
+  <div id="confirmModal" class="fixed inset-0 flex items-center justify-center hidden">
+    <div class="card p-6 w-full max-w-md">
+      <div id="confirmMessage" class="mb-5 text-sm"></div>
+      <div class="flex justify-end gap-2">
+        <button id="confirmNo" class="btn btn-soft">Yo‘q</button>
+        <button id="confirmYes" class="btn btn-primary">Ha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add time modal -->
+  <div id="timeBackdrop" class="fixed inset-0 bg-black/40 hidden"></div>
+  <div id="timeModal" class="fixed inset-0 flex items-center justify-center hidden">
+    <div class="card p-6 w-full max-w-md">
+      <div class="mb-3 text-sm">Qo‘shimcha vaqt (daqiqa):</div>
+      <input id="timeMinutes" type="number" min="1" class="input-like" placeholder="Masalan: 60">
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="timeCancelBtn" class="btn btn-soft">Bekor qilish</button>
+        <button id="timeSaveBtn" class="btn btn-primary">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification (toast) -->
+  <div id="toast" class="fixed bottom-6 right-6 card px-4 py-2 hidden"></div>
+
+  <script src="{{ url_for('static', filename='js/details.js') }}"></script>
+</body>
+</html>
