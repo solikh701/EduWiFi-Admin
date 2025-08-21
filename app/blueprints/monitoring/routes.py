@@ -1,28 +1,21 @@
 import math
-from . import monitoring_bp
-from sqlalchemy import text
-from ...extensions import moni_db
-from flask import jsonify, request
 from datetime import date, datetime
-from ...logging_config import configure_logging
 
+from flask import jsonify, request
+from sqlalchemy import text, func
+
+from . import monitoring_bp
+from ...extensions import moni_db, db
+from ...models import User
+from ...logging_config import configure_logging
 
 logger = configure_logging()
 
 
 @monitoring_bp.route("/api/monitoring", methods=["GET"])
 def api_monitoring():
-    """
-    Query params:
-      - page: int >=1
-      - limit: int (10/20/50/100)
-      - search: str
-      - sort: one of ['id','ts','client_ip','mac','hostname','domain','protocol','uid']
-      - order: 'asc' | 'desc'
-    """
     try:
-        # --- Params ---
-        page  = max(1, int(request.args.get("page", 1)))
+        page = max(1, int(request.args.get("page", 1)))
         limit = int(request.args.get("limit", 20))
         limit = 10 if limit < 10 else (100 if limit > 100 else limit)
 
@@ -36,7 +29,8 @@ def api_monitoring():
             "hostname": "hostname",
             "domain": "domain",
             "protocol": "protocol",
-            "uid": "uid",
+            "fio": "fio",
+            "phone_number": "phone_number",
         }
         sort = request.args.get("sort", "id")
         sort_col = allowed_sort.get(sort, "id")
@@ -46,25 +40,19 @@ def api_monitoring():
 
         offset = (page - 1) * limit
 
-        # --- WHERE (search) ---
         where_clause = ""
         params = {}
         if search:
             where_clause = (
                 "WHERE client_ip LIKE :q OR mac LIKE :q OR hostname LIKE :q "
-                "OR domain LIKE :q OR protocol LIKE :q OR uid LIKE :q"
+                "OR domain LIKE :q OR protocol LIKE :q"
             )
             params["q"] = f"%{search}%"
 
-        # --- Query ---
         with moni_db.connect() as conn:
-            # total count (search bo'yicha ham)
             total_sql = text(f"SELECT COUNT(*) AS cnt FROM monitoring {where_clause}")
             total = conn.execute(total_sql, params).scalar() or 0
 
-            # Ma'lumotlar (MAC uppercase; ts ni string formatda qaytaramiz)
-            # Agar ts DATETIME bo'lsa, DATE_FORMAT dan foydalanamiz
-            # ORDER BY - faqat ruxsat berilgan ustunlarda
             data_sql = text(f"""
                 SELECT
                     id,
@@ -73,8 +61,7 @@ def api_monitoring():
                     UPPER(mac) AS mac,
                     hostname,
                     domain,
-                    protocol,
-                    uid
+                    protocol
                 FROM monitoring
                 {where_clause}
                 ORDER BY {sort_col} {order_sql}
@@ -83,17 +70,33 @@ def api_monitoring():
             params.update({"limit": limit, "offset": offset})
             rows = conn.execute(data_sql, params).mappings().all()
 
-        # JSON-da datetime yo'q, lekin baribir himoya: (kutilmagan tip bo'lsa str ga aylantiramiz)
         items = []
+        mac_set = set()
         for r in rows:
             d = dict(r)
-            ts_val = d.get("ts")
-            if isinstance(ts_val, (datetime, date)):
-                d["ts"] = ts_val.strftime("%Y-%m-%d %H:%M:%S")
-            # MAC yuqorida UPPER qilingan; shunchaki string bo'lsa ham xavfsiz
+            if isinstance(d.get("ts"), (datetime, date)):
+                d["ts"] = d["ts"].strftime("%Y-%m-%d %H:%M:%S")
             if d.get("mac"):
                 d["mac"] = str(d["mac"]).upper()
+                mac_set.add(d["mac"])
             items.append(d)
+
+        user_map = {}
+        if mac_set:
+            q_users = (
+                db.session.query(User.MAC, User.fio, User.phone_number)
+                .filter(func.upper(User.MAC).in_(mac_set))
+                .all()
+            )
+            user_map = {
+                (u[0] or "").upper(): {"fio": u[1], "phone_number": u[2]} 
+                for u in q_users
+            }
+
+        for d in items:
+            u = user_map.get((d.get("mac") or "").upper())
+            d["fio"] = u["fio"] if u else "-"
+            d["phone_number"] = u["phone_number"] if u else "-"
 
         pages = max(1, math.ceil(total / limit)) if limit else 1
 

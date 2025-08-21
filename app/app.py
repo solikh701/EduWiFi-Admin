@@ -57,6 +57,13 @@ app = create_app(env)
 with app.app_context():
     reload_all_active_tariffs()
 
+@app.after_request
+def remove_server_header(response):
+    response.headers["Server"] = "EduWiFi Gateway"
+    if "X-Powered-By" in response.headers:
+        del response.headers["X-Powered-By"]
+    return response
+
 
 # @app.errorhandler(RequestEntityTooLarge)
 # def handle_large_request(e):

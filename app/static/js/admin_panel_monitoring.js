@@ -28,9 +28,11 @@ async function loadMonitoring() {
 
     if (items.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="8" class="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
-          Ma'lumot topilmadi
-        </td></tr>`;
+        <tr>
+          <td colspan="9" class="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+            Ma'lumot topilmadi
+          </td>
+        </tr>`;
     } else {
       tbody.innerHTML = items.map(r => `
         <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition">
@@ -38,19 +40,20 @@ async function loadMonitoring() {
           <td class="px-3 py-2">${r.ts ?? ''}</td>
           <td class="px-3 py-2">${r.client_ip ?? ''}</td>
           <td class="px-3 py-2">${(r.mac ?? '-').toString().toUpperCase()}</td>
+          <td class="px-3 py-2">${r.fio ? r.fio : '-'}</td>
+          <td class="px-3 py-2">${r.phone_number ? r.phone_number : '-'}</td>
           <td class="px-3 py-2">${r.hostname ?? '-'}</td>
           <td class="px-3 py-2">${r.domain ?? '-'}</td>
           <td class="px-3 py-2">${r.protocol ?? ''}</td>
-          <td class="px-3 py-2">${r.uid ?? ''}</td>
         </tr>
       `).join('');
     }
 
-    // pastdagi boshqaruvlar
+    // boshqaruvlar
     renderPagination();
     updateSortArrows();
 
-    // URL holatini yangilash (ixtiyoriy, foydali)
+    // URL holatini yangilash (ixtiyoriy)
     const urlParams = new URLSearchParams();
     urlParams.set('page', page);
     urlParams.set('limit', limit);
@@ -60,8 +63,6 @@ async function loadMonitoring() {
     history.replaceState(null, '', `/admin_panel_monitoring?${urlParams.toString()}`);
   } catch (err) {
     console.error('Error loading monitoring:', err);
-    // xatoni foydalanuvchiga ko'rsatish (xohlasangiz)
-    // alert('Ma\'lumot yuklashda xatolik.');
   }
 }
 
@@ -169,9 +170,29 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sort === s) order = (order === 'asc' ? 'desc' : 'asc');
       else { sort = s; order = 'asc'; }
       page = 1;
-      loadMonitoring();
+      if (s === 'fio' || s === 'phone_number') {
+        sortFrontend(s, order);
+      } else {
+        loadMonitoring(); 
+      }
     });
   });
+
+  function sortFrontend(field, order) {
+    const tbody = document.getElementById('monitoringBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const valA = (a.querySelector(`td:nth-child(${field === 'fio' ? 5 : 6})`).textContent || '').toLowerCase();
+      const valB = (b.querySelector(`td:nth-child(${field === 'fio' ? 5 : 6})`).textContent || '').toLowerCase();
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+    tbody.innerHTML = '';
+    rows.forEach(r => tbody.appendChild(r));
+
+    updateSortArrows();
+  }
 
   // search (debounce)
   const searchInput = document.getElementById('searchInput');

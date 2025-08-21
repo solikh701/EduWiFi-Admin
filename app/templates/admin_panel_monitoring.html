@@ -50,10 +50,9 @@
       --sidebar-w:16rem; /* w-64 */
       --easing:cubic-bezier(.22,1,.36,1);
     }
-    /* ========= PROFESSIONAL SIDEBAR — translateX ========= */
     #sidebar{
       position:fixed; inset:0 auto 0 0; width:var(--sidebar-w);
-      background-color: #ffffff; 
+      background-color: #ffffff;
       will-change: transform, opacity;
       transform:translateX(-100%);
       opacity:0; pointer-events:none;
@@ -62,19 +61,16 @@
     }
     #sidebar[data-open="true"]{ transform:translateX(0); opacity:1; pointer-events:auto; }
 
-    .dark #sidebar{
-      background-color: #111827;        /* dark: gray-900 */
-    }
-    /* Kontent margin-left animatsiyasi (desktopda joy ajratish) */
+    .dark #sidebar{ background-color: #111827; }
     #content{ transition: margin-left .36s var(--easing); }
     @media (min-width: 768px){
       body[data-sidebar-open="true"]  #content{ margin-left: var(--sidebar-w); }
       body[data-sidebar-open="false"] #content{ margin-left: 0; }
     }
-    /* Overlay (mobil) */
-    #sidebarBackdrop{ transition: opacity .28s ease; background: rgba(0,0,0,.55);        /* biroz quyuqroq */
-                      -webkit-backdrop-filter: blur(2px);
-                      backdrop-filter: blur(2px); }
+    #sidebarBackdrop{
+      transition: opacity .28s ease; background: rgba(0,0,0,.55);
+      -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    }
     @media (prefers-reduced-motion: reduce){
       #sidebar, #content, #sidebarBackdrop{ transition:none!important; }
     }
@@ -82,11 +78,9 @@
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex transition-colors duration-300 dark:text-white">
-
-  <!-- Safelist helper for animations -->
   <div class="hidden opacity-0 animate-slide-in-left animate-slide-out-left animate-fade-in-up animate-scale-in animate-slide-up"></div>
 
-  <!-- ========== Sidebar ========== -->
+  <!-- Sidebar -->
   <aside id="sidebar" data-open="false" aria-hidden="true"
          class="w-64 bg-white dark:bg-gray-900 shadow-lg flex flex-col z-50">
     <div class="flex items-center gap-2 px-6 py-6 border-b border-gray-200 dark:border-gray-800">
@@ -94,81 +88,61 @@
       <span class="font-bold text-xl text-indigo-700 dark:text-indigo-300">EduWiFi Admin</span>
     </div>
 
-    <!-- Yopish tugmasi (har doim mavjud) -->
-    <button id="sidebarClose" class="p-2 m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 transition"
-            aria-label="Yopish" title="Yopish">
+    <button id="sidebarClose" class="p-2 m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 transition" aria-label="Yopish" title="Yopish">
       <i data-lucide="x" class="w-6 h-6"></i>
     </button>
 
     <nav class="flex-1 px-2 py-4 overflow-y-auto">
-      <!-- Bosh sahifa — AKTIV -->
       <a href="/admin_panel_main" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 dark:text-white hover:bg-indigo-100 dark:hover:bg-indigo-900 font-semibold mb-2 transition-colors">
-        <i data-lucide="home" class="w-5 h-5"></i>
-        Bosh sahifa
+        <i data-lucide="home" class="w-5 h-5"></i> Bosh sahifa
       </a>
 
-      <!-- WiFi lar (dropdown) — default: OCHIQ (admin_panel_ad dagidek) -->
       <div>
         <button id="wifiMenuBtn" type="button" aria-controls="wifiMenu" aria-expanded="true"
                 class="flex items-center justify-between w-full px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold focus:outline-none transition-colors">
-          <span class="flex items-center gap-3">
-            <i data-lucide="wifi" class="w-5 h-5"></i>
-            WiFi lar
-          </span>
+          <span class="flex items-center gap-3"><i data-lucide="wifi" class="w-5 h-5"></i> WiFi lar</span>
           <i id="wifiMenuArrow" data-lucide="chevron-down" class="w-4 h-4 transform rotate-180 transition-transform"></i>
         </button>
 
         <div id="wifiMenu" class="ml-8 mt-1 space-y-1 block">
           <a href="/wifi" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="list" class="w-4 h-4"></i>
-            WiFi lar ro'yxati
+            <i data-lucide="list" class="w-4 h-4"></i> WiFi lar ro'yxati
           </a>
           <a href="/admin_panel_settings" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="settings" class="w-4 h-4"></i>
-            Sozlamalar
+            <i data-lucide="settings" class="w-4 h-4"></i> Sozlamalar
           </a>
           <a href="/admin_panel_ad" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="megaphone" class="w-4 h-4"></i>
-            Reklamalar
+            <i data-lucide="megaphone" class="w-4 h-4"></i> Reklamalar
           </a>
           <a href="/admin_panel_transaction" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="receipt-text" class="w-4 h-4"></i>
-            Tranzaksiyalar
+            <i data-lucide="receipt-text" class="w-4 h-4"></i> Tranzaksiyalar
           </a>
           <a href="/admin_panel_users" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="users" class="w-4 h-4"></i>
-            Foydalanuvchilar
+            <i data-lucide="users" class="w-4 h-4"></i> Foydalanuvchilar
           </a>
           <a href="/admin_panel_tarif" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
-            <i data-lucide="layers" class="w-4 h-4"></i>
-            Tarif rejalar
+            <i data-lucide="layers" class="w-4 h-4"></i> Tarif rejalar
           </a>
         </div>
       </div>
 
       <a href="/teachers" class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 dark:text-white hover:bg-indigo-100 dark:hover:bg-indigo-900 font-semibold mb-2 transition-colors">
-        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-        O'qituvchilar
+        <i data-lucide="graduation-cap" class="w-5 h-5"></i> O'qituvchilar
       </a>
 
       <a href="/admin_panel_monitoring"
          class="flex items-center gap-3 px-4 py-2 rounded-lg text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900 font-semibold mb-2 transition-colors">
-        <i data-lucide="users" class="w-5 h-5"></i>
-        Monitoring
+        <i data-lucide="users" class="w-5 h-5"></i> Monitoring
       </a>
     </nav>
   </aside>
 
-  <!-- Mobil overlay -->
   <div id="sidebarBackdrop" class="fixed inset-0 bg-black/40 opacity-0 pointer-events-none md:hidden z-40"></div>
 
-  <!-- ========== Main (kontent) ========== -->
+  <!-- Main -->
   <div id="content" class="flex-1 flex flex-col min-h-screen">
-    <!-- Topbar -->
     <header class="flex items-center justify-between bg-white dark:bg-gray-800 shadow px-8 py-4 transition-colors duration-300">
-      <!-- Sidebar toggle -->
-      <button id="sidebarToggle" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 transition"
-              aria-label="Sidebarni ochish/yopish" aria-controls="sidebar" aria-expanded="true" title="Menyu">
+      <button id="sidebarToggle" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 transition" aria-label="Sidebarni ochish/yopish" aria-controls="sidebar" aria-expanded="true" title="Menyu">
         <span id="iconSidebarOpen" class="hidden"><i data-lucide="panel-left-open" class="w-6 h-6"></i></span>
         <span id="iconSidebarClose"><i data-lucide="panel-left-close" class="w-6 h-6"></i></span>
       </button>
@@ -176,13 +150,11 @@
       <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100">Monitoring</h2>
 
       <div class="flex items-center gap-4">
-        <!-- Theme toggle (sun/moon) -->
         <button id="themeToggle" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 focus:outline-none active:scale-95 transition" title="Tungi/Yorug' rejim">
           <span id="themeIconSun" class="hidden"><i data-lucide="sun" class="w-6 h-6 text-gray-600 dark:text-white"></i></span>
           <span id="themeIconMoon"><i data-lucide="moon" class="w-6 h-6 text-gray-600 dark:text-white"></i></span>
         </button>
 
-        <!-- Profile -->
         <div class="relative">
           <button id="sidebarProfileBtn" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center focus:outline-none active:scale-95 transition" aria-haspopup="true" aria-expanded="false" title="Profil">
             <i data-lucide="user-round" class="w-6 h-6 text-gray-600 dark:text-white"></i>
@@ -194,20 +166,20 @@
       </div>
     </header>
 
-    <!-- Dashboard content -->
     <main class="p-6">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 max-w-7xl mx-auto">
+
+        <!-- Search (top-right) -->
         <div class="flex items-center justify-between mb-3">
           <div></div>
           <div class="relative">
-            <i data-lucide="search"
-              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input id="searchInput"
-                  class="pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700
+                   class="pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700
                           dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-400
                           transition w-72"
-                  placeholder="Qidirish... (IP, MAC, domain, host, protokol, UID)"
-                  autocomplete="off"/>
+                   placeholder="Qidirish... (IP, MAC, domain, host, protokol)"
+                   autocomplete="off"/>
           </div>
         </div>
 
@@ -219,15 +191,17 @@
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="ts">Vaqt <span class="sort-arrow">⬍</span></th>
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="client_ip">IP <span class="sort-arrow">⬍</span></th>
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="mac">MAC <span class="sort-arrow">⬍</span></th>
+
+                <!-- Sort qo‘shilgan ustunlar -->
+                <th class="px-3 py-2 cursor-pointer sort" data-sort="fio">FIO <span class="sort-arrow">⬍</span></th>
+                <th class="px-3 py-2 cursor-pointer sort" data-sort="phone_number">Telefon <span class="sort-arrow">⬍</span></th>
+
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="hostname">Host <span class="sort-arrow">⬍</span></th>
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="domain">Domain <span class="sort-arrow">⬍</span></th>
                 <th class="px-3 py-2 cursor-pointer sort" data-sort="protocol">Protocol <span class="sort-arrow">⬍</span></th>
-                <th class="px-3 py-2 cursor-pointer sort" data-sort="uid">UID <span class="sort-arrow">⬍</span></th>
               </tr>
             </thead>
-            <tbody id="monitoringBody" class="divide-y divide-gray-200 dark:divide-gray-700">
-              <!-- JS bilan to'ldiriladi -->
-            </tbody>
+            <tbody id="monitoringBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
           </table>
         </div>
 
@@ -244,7 +218,6 @@
               <option value="100">100</option>
             </select>
 
-            <!-- Go to page (o‘ng past burchak) -->
             <div class="flex items-center gap-2 ml-4">
               <label class="text-xs">Go to page:</label>
               <input type="number" id="pageInput" min="1" class="w-20 rounded-lg border px-2 py-1 dark:bg-gray-900 dark:text-white">
@@ -264,13 +237,10 @@
   <!-- Kutubxonalar -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- UI/Theme/Sidebar/Dropdown logikasi (admin_panel_ad bilan bir xil) -->
+  <!-- UI theme & sidebar (unchanged) -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Lucide ikonlarni chizish
       if (window.lucide && lucide.createIcons) { lucide.createIcons(); }
-
-      // ====== "Ma'lumot yo'q" (income chart) ko'rsatish ======
       setTimeout(function () {
         const chartData = window.dashboard && window.dashboard.wifi_income_data ? window.dashboard.wifi_income_data : [];
         if (!chartData || chartData.length === 0 || chartData.every(w => !w.value || w.value == 0)) {
@@ -283,7 +253,6 @@
         }
       }, 700);
 
-      // ====== Theme toggle (sun/moon) ======
       const themeToggle = document.getElementById('themeToggle');
       const sunWrap = document.getElementById('themeIconSun');
       const moonWrap = document.getElementById('themeIconMoon');
@@ -307,7 +276,6 @@
         setTheme(next);
       });
 
-      // ====== Profile dropdown & logout ======
       const profileBtn = document.getElementById('sidebarProfileBtn');
       const profileMenu = document.getElementById('profileMenu');
       if (profileBtn && profileMenu){
@@ -329,28 +297,22 @@
         };
       }
 
-      // ====== Sidebar toggling (admin_panel_ad dagi kabi) ======
       const aside    = document.getElementById('sidebar');
       const toggleBtn= document.getElementById('sidebarToggle');
       const closeBtn = document.getElementById('sidebarClose');
       const backdrop = document.getElementById('sidebarBackdrop');
-      const iconOpen = document.getElementById('iconSidebarOpen');  // panel-left-open
-      const iconClose= document.getElementById('iconSidebarClose'); // panel-left-close
+      const iconOpen = document.getElementById('iconSidebarOpen');
+      const iconClose= document.getElementById('iconSidebarClose');
       const mql      = window.matchMedia('(min-width: 768px)');
 
       function isMdUp(){ return mql.matches; }
       function isOpen(){ return aside && aside.dataset.open === 'true'; }
-
       function updateUI(){
         const open = isOpen();
-        // Ikonlar
         iconOpen && iconOpen.classList.toggle('hidden', open);
         iconClose && iconClose.classList.toggle('hidden', !open);
-        // ARIA
         toggleBtn && toggleBtn.setAttribute('aria-expanded', String(open));
-        // Body flag (kontent margin-left uchun)
         document.body.dataset.sidebarOpen = open ? 'true' : 'false';
-        // Backdrop faqat mobil
         if (backdrop){
           const show = open && !isMdUp();
           backdrop.classList.toggle('opacity-100', show);
@@ -358,42 +320,29 @@
           backdrop.classList.toggle('opacity-0', !show);
           backdrop.classList.toggle('pointer-events-none', !show);
         }
-        // Body scroll lock (faqat mobil ochiq holatida)
         document.body.classList.toggle('overflow-hidden', open && !isMdUp());
       }
-
       function openSidebar(){ aside.dataset.open = 'true'; updateUI(); }
       function closeSidebar(){ aside.dataset.open = 'false'; updateUI(); }
       function toggleSidebar(){ isOpen() ? closeSidebar() : openSidebar(); }
-
-      // Boshlang'ich holat: md+ da ochiq, mobil da yopiq
-      function applyInitial(){
-        aside.dataset.open = isMdUp() ? 'true' : 'false';
-        updateUI();
-      }
+      function applyInitial(){ aside.dataset.open = isMdUp() ? 'true' : 'false'; updateUI(); }
       applyInitial();
-
       toggleBtn  && toggleBtn.addEventListener('click', toggleSidebar);
       closeBtn   && closeBtn.addEventListener('click', closeSidebar);
       backdrop   && backdrop.addEventListener('click', closeSidebar);
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
       mql.addEventListener('change', applyInitial);
 
-      // ====== WiFi menyusi: height transition bilan silliq (admin_panel_ad kabi) ======
       const wifiBtn   = document.getElementById('wifiMenuBtn');
       const wifiMenu  = document.getElementById('wifiMenu');
       const wifiArrow = document.getElementById('wifiMenuArrow');
-
       function collapse(el){
         if (!el || el.classList.contains('hidden')) return;
         const start = el.scrollHeight;
         el.style.height = start + 'px';
         el.style.overflow = 'hidden';
         el.style.transition = 'height .28s cubic-bezier(.22,1,.36,1), opacity .2s ease';
-        requestAnimationFrame(() => {
-          el.style.height = '0px';
-          el.style.opacity = '0';
-        });
+        requestAnimationFrame(() => { el.style.height = '0px'; el.style.opacity = '0'; });
         el.addEventListener('transitionend', function handler(){
           el.classList.add('hidden');
           el.style.removeProperty('height'); el.style.removeProperty('overflow');
@@ -407,16 +356,13 @@
         el.style.height = '0px'; el.style.overflow = 'hidden'; el.style.opacity = '0';
         el.style.transition = 'height .28s cubic-bezier(.22,1,.36,1), opacity .2s ease';
         const end = el.scrollHeight;
-        requestAnimationFrame(() => {
-          el.style.height = end + 'px'; el.style.opacity = '1';
-        });
+        requestAnimationFrame(() => { el.style.height = end + 'px'; el.style.opacity = '1'; });
         el.addEventListener('transitionend', function handler(){
           el.style.removeProperty('height'); el.style.removeProperty('overflow');
           el.style.removeProperty('transition'); el.style.removeProperty('opacity');
           el.removeEventListener('transitionend', handler);
         });
       }
-
       if (wifiBtn && wifiMenu && wifiArrow){
         wifiBtn.addEventListener('click', () => {
           const isHidden = wifiMenu.classList.contains('hidden');
@@ -427,7 +373,6 @@
     });
   </script>
 
-  <!-- Sizning ishlaydigan JS faylingiz -->
   <script src="/static/js/admin_panel_monitoring.js"></script>
 </body>
 </html>
