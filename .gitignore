@@ -1,12 +1,7 @@
-# Python cache
 __pycache__/
-**/__pycache__/
-
-# IDE configs
-.idea/
-**/.idea/
-
-# Environment
 .env
-
-venv
+venv/
+.idea/
+D:/Abusolih/WIFI-ADMIN/app/logs
+**/__pycache__/
+**/.idea/
