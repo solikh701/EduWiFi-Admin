@@ -5,4 +5,4 @@ venv/
 D:/Abusolih/WIFI-ADMIN/app/logs
 **/__pycache__/
 **/.idea/
-**/migrations/
+migrations/
