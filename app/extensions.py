@@ -6,27 +6,39 @@ from flask_caching import Cache
 from flask_session import Session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import create_engine
+from flask_migrate import Migrate
 from flask_socketio import SocketIO
 import redis
 import os
 
-from urllib.parse import quote_plus
-from sqlalchemy import create_engine
+from pymongo import MongoClient, ASCENDING
 
-MONITORING_DB_USER = os.getenv("MONITORING_DB_USER")
-MONITORING_DB_PASS = quote_plus(os.getenv("MONITORING_DB_PASS", ""))
-MONITORING_DB_HOST = os.getenv("MONITORING_DB_HOST")
-MONITORING_DB_NAME = os.getenv("MONITORING_DB_NAME")
+MONGO_URI     = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "zeekdb")
+MONGO_COLL    = os.getenv("MONGO_COLL", "monitoring")
+MONGO_TTL_DAYS = int(os.getenv("MONGO_TTL_DAYS", "30"))
 
-moni_db = create_engine(
-    f"mysql+pymysql://{MONITORING_DB_USER}:{MONITORING_DB_PASS}@{MONITORING_DB_HOST}/{MONITORING_DB_NAME}?charset=utf8mb4",
-    pool_pre_ping=True
-)
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client[MONGO_DB_NAME]
+monitoring_coll = mongo_db[MONGO_COLL]
+
+def _ensure_mongo_indexes():
+    try:
+        monitoring_coll.create_index([("ts", ASCENDING)], expireAfterSeconds=MONGO_TTL_DAYS*24*3600)
+    except Exception:
+        pass
+    for f in ("client_ip", "mac", "domain", "protocol"):
+        try: monitoring_coll.create_index([(f, ASCENDING)])
+        except Exception: pass
+    try:
+        monitoring_coll.create_index([("uid", ASCENDING), ("protocol", ASCENDING)], unique=True)
+    except Exception:
+        pass
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 jwt = JWTManager()
+migrate = Migrate()
 cors = CORS()
 cache = Cache()
 sess = Session()
@@ -38,6 +50,7 @@ socketio = SocketIO(
     cors_allowed_origins="*",
     ping_interval=25,
     ping_timeout=60,
+    message_queue="redis://127.0.0.1:6379/0"
 )
 
 _redis = None
@@ -53,6 +66,7 @@ def get_redis(app=None):
 def init_extensions(app):
     db.init_app(app)
     bcrypt.init_app(app)
+    migrate.init_app(app, db) 
     jwt.init_app(app)
     cors.init_app(app)
     cache.init_app(app)
@@ -76,3 +90,5 @@ def init_extensions(app):
         ping_interval=25,
         ping_timeout=60,
     )
+
+    _ensure_mongo_indexes()

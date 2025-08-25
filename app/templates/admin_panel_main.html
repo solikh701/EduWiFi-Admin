@@ -122,7 +122,7 @@
         <div id="wifiMenu" class="ml-8 mt-1 space-y-1 block">
           <a href="/wifi" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
             <i data-lucide="list" class="w-4 h-4"></i>
-            WiFi lar ro'yxati
+            OTM lar
           </a>
           <a href="/admin_panel_settings" class="flex items-center gap-2 block px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-800 text-gray-700 dark:text-white transition-colors">
             <i data-lucide="settings" class="w-4 h-4"></i>
@@ -217,11 +217,25 @@
             </svg>
           </div>
           <div>
-            <div class="text-gray-500 dark:text-white text-xs">Umumiy WiFi lar soni</div>
+            <div class="text-gray-500 dark:text-white text-xs">Umumiy OTM lar soni</div>
             <div class="text-2xl font-bold" id="totalWifi">0</div>
           </div>
         </div>
 
+        <!-- ✅ KUNLIK DAROMAD — YANGI -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow p-5 flex items-center gap-4">
+          <div class="bg-amber-100 dark:bg-amber-800 p-3 rounded-full">
+            <svg class="w-7 h-7 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 6h14M8 19h8"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="text-gray-500 dark:text-white text-xs">Kunlik daromad</div>
+            <div class="text-2xl font-bold" id="dailyIncome">0 so'm</div>
+          </div>
+        </div>
+
+        <!-- Oylik daromad ... (mavjud kartka, o'rni 4-chi bo'lib qoldi) -->
         <div class="bg-white dark:bg-gray-900 rounded-xl shadow p-5 flex items-center gap-4">
           <div class="bg-yellow-100 dark:bg-yellow-800 p-3 rounded-full">
             <svg class="w-7 h-7 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -243,29 +257,41 @@
           <div class="flex items-center justify-between mb-2">
             <div class="font-semibold text-gray-700 dark:text-gray-100">Ulanishlar</div>
             <div class="flex gap-2">
-              <button class="filterBtn px-2 py-1 rounded text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-800" data-filter="all">Hammasi</button>
-              <button class="filterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="1m">1 oy</button>
-              <button class="filterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="6m">6 oy</button>
-              <button class="filterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="1y">1 yil</button>
+              <!-- ✅ Yil / Oy / Kun -->
+              <button class="connViewBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="year">Yil</button>
+              <button class="connViewBtn px-2 py-1 rounded text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-800" data-view="month">Oy</button>
+              <button class="connViewBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="day">Kun</button>
             </div>
           </div>
           <canvas id="connectionsChart" height="80"></canvas>
         </div>
 
-        <!-- WiFi dan tushgan pullar -->
+        <!-- ✅ YANGI: Tushum dinamikasi (stacked bar, universitetlar bo'yicha) -->
         <div class="bg-white dark:bg-gray-900 rounded-xl shadow p-5 relative" style="height: 270px;">
           <div class="flex items-center justify-between mb-2">
-            <div class="font-semibold text-gray-700 dark:text-gray-100">WiFi lar bo'yicha tushum</div>
+            <div class="font-semibold text-gray-700 dark:text-gray-100">Tushum dinamikasi</div>
             <div class="flex gap-2">
-              <button class="incomeFilterBtn px-2 py-1 rounded text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-800" data-filter="all">Hammasi</button>
-              <button class="incomeFilterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="1m">1 oy</button>
-              <button class="incomeFilterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="6m">6 oy</button>
-              <button class="incomeFilterBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-filter="1y">1 yil</button>
+              <button class="incomeDynBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="year">Yil</button>
+              <button class="incomeDynBtn px-2 py-1 rounded text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-800" data-view="month">Oy</button>
+              <button class="incomeDynBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="day">Kun</button>
             </div>
           </div>
-          <div class="h-full flex items-center justify-center" id="incomeChartContainer">
-            <canvas id="incomeChart" height="80"></canvas>
-            <div id="noIncomeData" class="absolute text-gray-400 dark:text-gray-500 text-sm hidden">Ma'lumot yo'q</div>
+          <canvas id="incomeDynChart" height="80"></canvas>
+        </div>
+
+        <!-- ✅ WiFi lar bo'yicha tushum — RASMDAGIDEK (stacked bar) -->
+        <div class="mb-6">
+          <div class="bg-white dark:bg-gray-900 rounded-xl shadow p-5 relative" style="height: 270px;">
+            <div class="flex items-center justify-between mb-2">
+              <div class="font-semibold text-gray-700 dark:text-gray-100">OTM lar bo'yicha tushum</div>
+              <div class="flex gap-2">
+                <button class="wifiIncomeBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="year">Yil</button>
+                <button class="wifiIncomeBtn px-2 py-1 rounded text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-800" data-view="month">Oy</button>
+                <button class="wifiIncomeBtn px-2 py-1 rounded text-xs font-semibold text-gray-600 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800" data-view="day">Kun</button>
+              </div>
+            </div>
+            <canvas id="wifiIncomeChart" height="80"></canvas>
+            <div id="wifiNoData" class="absolute inset-0 hidden items-center justify-center text-gray-400 dark:text-gray-500 text-sm pointer-events-none">Ma'lumot yo'q</div>
           </div>
         </div>
       </div>

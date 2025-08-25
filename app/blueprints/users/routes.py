@@ -771,9 +771,17 @@ def get_user_authorizations(user_id):
         authorizations = sorted(user.authorizations, key=lambda x: x.authorization_date, reverse=True)
         all_items = []
         for auth in authorizations:
-            status = auth.authorization_activeness
-            if status not in ['AKTIV', 'NOAKTIV']:
-                continue
+            raw_status = (getattr(auth, 'authorization_activeness', '') or '').strip().upper()
+            status_map = {
+                'AKTIV': 'AKTIV',
+                'NOAKTIV': 'NOAKTIV',
+                'NOINTERNETPAY': 'NOAKTIV',
+                'NO INTERNET PAY': 'NOAKTIV',
+                'NO_INTERNET_PAY': 'NOAKTIV',
+                'BLOCKED': 'NOAKTIV',
+                'EXPIRED': 'NOAKTIV',
+            }
+            status = status_map.get(raw_status, raw_status or 'NOAKTIV')
 
             date_str = auth.authorization_date.strftime("%d-%m-%Y %H:%M:%S")                        if isinstance(auth.authorization_date, datetime) else str(auth.authorization_date)
             tarif    = auth.selected_tariff
@@ -854,6 +862,7 @@ def get_user_authorizations(user_id):
         end   = start + per_page
         items = all_items[start:end]
 
+        logger.info(f"[get_user_authorizations] Request sended for user_id={user_id}, items={items}")
         return jsonify({
             "page":        page,
             "per_page":    per_page,

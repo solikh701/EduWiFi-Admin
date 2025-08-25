@@ -30,6 +30,13 @@
         <td class="px-3 py-2">${u.phone_number ?? ''}</td>
         <td class="px-3 py-2">${u.role ?? ''}</td>
         <td class="px-3 py-2">${u.last_authorization ?? ''}</td>
+        <!-- 🔽 Batafsil tugma -->
+        <td class="px-3 py-2">
+          <button onclick="window.location.href='/admin_panel_details?id=${u.id}'"
+                  class="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs transition">
+            Batafsil
+          </button>
+        </td>
       </tr>
     `).join('');
     prevBtn.disabled = (page<=1);

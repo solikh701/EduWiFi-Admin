@@ -14,7 +14,7 @@ class User(db.Model):
     overall_authorizations = db.Column(db.Integer)
     overall_payed_sum = db.Column(db.String(50))
     block = db.Column(db.Boolean)
-    last_free_tariff_use = db.Column(db.String, nullable=True)
+    last_free_tariff_use = db.Column(db.String(50), nullable=True)
     free_tariff_limit = db.Column(db.Integer, default=0)
     comments = db.Column(db.String(100))
     latest_payed_amount = db.Column(db.String(20))
@@ -81,11 +81,12 @@ class UserAuthorization(db.Model):
     selected_tariff = db.Column(db.String(50))
     tariff_limit = db.Column(db.String(50))
     authorization_activeness = db.Column(db.String(20))
+    link_login = db.Column(db.String(255), nullable=True)
 
 
 class tariff_plan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    price = db.Column(db.String)
+    price = db.Column(db.String(50)) 
     is_active = db.Column(db.Boolean)
     duration_days = db.Column(db.String(50))
     rate_limit = db.Column(db.String(25))
@@ -96,7 +97,7 @@ class tariff_plan(db.Model):
             'price': self.price,
             'is_active': self.is_active,
             'duration_days': self.duration_days, 
-            'rate_limit': self.rate_limit
+            'rate_limit': self.rate_limit, 
         }
 
 
@@ -108,14 +109,14 @@ class Settings(db.Model):
     switch4 = db.Column(db.Boolean)
     switch5 = db.Column(db.Boolean)
     switch6 = db.Column(db.Boolean)
-    file1Preview = db.Column(db.String, nullable=True)
-    file2Preview = db.Column(db.String, nullable=True)
-    freeTime = db.Column(db.String)
-    freeTimeRepeat = db.Column(db.String)
+    file1Preview = db.Column(db.String(255), nullable=True)
+    file2Preview = db.Column(db.String(255), nullable=True)
+    freeTime = db.Column(db.String(50))  
+    freeTimeRepeat = db.Column(db.String(50))
     docx = db.Column(db.Text, nullable=True)
-    phone = db.Column(db.String)
-    text1 = db.Column(db.String)
-    text2 = db.Column(db.String)
+    phone = db.Column(db.String(20)) 
+    text1 = db.Column(db.String(255))
+    text2 = db.Column(db.String(255))
 
     def to_dict(self):
         return {
@@ -149,16 +150,16 @@ class ReklamaData(db.Model):
     duration3 = db.Column(db.Integer)
     duration4 = db.Column(db.Integer)
     duration5 = db.Column(db.Integer)
-    date_start1 = db.Column(db.String)
-    date_start2 = db.Column(db.String)
-    date_start3 = db.Column(db.String)
-    date_start4 = db.Column(db.String)
-    date_start5 = db.Column(db.String)
-    date_end1 = db.Column(db.String)
-    date_end2 = db.Column(db.String)
-    date_end3 = db.Column(db.String)
-    date_end4 = db.Column(db.String)
-    date_end5 = db.Column(db.String)
+    date_start1 = db.Column(db.String(50))
+    date_start2 = db.Column(db.String(50))
+    date_start3 = db.Column(db.String(50))
+    date_start4 = db.Column(db.String(50))
+    date_start5 = db.Column(db.String(50))
+    date_end1 = db.Column(db.String(50))  
+    date_end2 = db.Column(db.String(50))  
+    date_end3 = db.Column(db.String(50))  
+    date_end4 = db.Column(db.String(50))  
+    date_end5 = db.Column(db.String(50))  
     check1 = db.Column(db.Boolean)
     check2 = db.Column(db.Boolean)
     check3 = db.Column(db.Boolean)
@@ -209,6 +210,7 @@ class Transaction(db.Model):
     perform_time = db.Column(db.DateTime)
     cancel_time = db.Column(db.DateTime)
     reason = db.Column(db.String(50))
+    link_login = db.Column(db.String(255), nullable=True)
 
     def to_dict(self):
         return {
@@ -217,10 +219,11 @@ class Transaction(db.Model):
             'amount': self.amount,
             'transaction_id': self.transaction_id,
             'status': self.status,
-            'state': self.status_message,
+            'state': self.state,
             'account_key': self.account_key,
             'create_time': self.create_time,
             'perform_time': self.perform_time,
             'cancel_time': self.cancel_time,
-            'reason': self.reason
+            'reason': self.reason, 
+            'link_login': self.link_login
         }

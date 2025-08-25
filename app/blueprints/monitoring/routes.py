@@ -1,16 +1,22 @@
 import math
-from datetime import date, datetime
+from datetime import datetime, timedelta
 
 from flask import jsonify, request
-from sqlalchemy import text, func
+from sqlalchemy import func
 
 from . import monitoring_bp
-from ...extensions import moni_db, db
+from ...extensions import monitoring_coll, db
 from ...models import User
 from ...logging_config import configure_logging
 
 logger = configure_logging()
+LOCAL_OFFSET_HOURS = 0
 
+
+def fmt_ts_local(dt):
+    if isinstance(dt, (datetime,)):
+        return (dt + timedelta(hours=LOCAL_OFFSET_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
+    return dt
 
 @monitoring_bp.route("/api/monitoring", methods=["GET"])
 def api_monitoring():
@@ -18,11 +24,12 @@ def api_monitoring():
         page = max(1, int(request.args.get("page", 1)))
         limit = int(request.args.get("limit", 20))
         limit = 10 if limit < 10 else (100 if limit > 100 else limit)
+        offset = (page - 1) * limit
 
         search = (request.args.get("search", "") or "").strip()
 
         allowed_sort = {
-            "id": "id",
+            "id": "_id",
             "ts": "ts",
             "client_ip": "client_ip",
             "mac": "mac",
@@ -33,53 +40,52 @@ def api_monitoring():
             "phone_number": "phone_number",
         }
         sort = request.args.get("sort", "id")
-        sort_col = allowed_sort.get(sort, "id")
+        sort_field = allowed_sort.get(sort, "_id")
 
         order = request.args.get("order", "desc").lower()
-        order_sql = "ASC" if order == "asc" else "DESC"
+        sort_dir = 1 if order == "asc" else -1
 
-        offset = (page - 1) * limit
-
-        where_clause = ""
-        params = {}
+        filt = {}
         if search:
-            where_clause = (
-                "WHERE client_ip LIKE :q OR mac LIKE :q OR hostname LIKE :q "
-                "OR domain LIKE :q OR protocol LIKE :q"
-            )
-            params["q"] = f"%{search}%"
+            filt = {
+                "$or": [
+                    {"client_ip": {"$regex": search, "$options": "i"}},
+                    {"mac":       {"$regex": search, "$options": "i"}},
+                    {"hostname":  {"$regex": search, "$options": "i"}},
+                    {"domain":    {"$regex": search, "$options": "i"}},
+                    {"protocol":  {"$regex": search, "$options": "i"}},
+                ]
+            }
 
-        with moni_db.connect() as conn:
-            total_sql = text(f"SELECT COUNT(*) AS cnt FROM monitoring {where_clause}")
-            total = conn.execute(total_sql, params).scalar() or 0
+        total = monitoring_coll.count_documents(filt)
 
-            data_sql = text(f"""
-                SELECT
-                    id,
-                    DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') AS ts,
-                    client_ip,
-                    UPPER(mac) AS mac,
-                    hostname,
-                    domain,
-                    protocol
-                FROM monitoring
-                {where_clause}
-                ORDER BY {sort_col} {order_sql}
-                LIMIT :limit OFFSET :offset
-            """)
-            params.update({"limit": limit, "offset": offset})
-            rows = conn.execute(data_sql, params).mappings().all()
+        cursor = monitoring_coll.find(
+            filt,
+            sort=[(sort_field, sort_dir)],
+            skip=offset,
+            limit=limit
+        )
 
         items = []
         mac_set = set()
-        for r in rows:
-            d = dict(r)
-            if isinstance(d.get("ts"), (datetime, date)):
-                d["ts"] = d["ts"].strftime("%Y-%m-%d %H:%M:%S")
-            if d.get("mac"):
-                d["mac"] = str(d["mac"]).upper()
+
+        seq_id = offset + 1
+        for doc in cursor:
+            d = {
+                "id": seq_id,
+                "ts": fmt_ts_local(doc.get("ts")),
+                "client_ip": doc.get("client_ip"),
+                "mac": (doc.get("mac") or ""),
+                "hostname": doc.get("hostname"),
+                "domain": doc.get("domain"),
+                "protocol": doc.get("protocol"),
+                "uid": doc.get("uid"),
+            }
+            if d["mac"]:
+                d["mac"] = d["mac"].upper()
                 mac_set.add(d["mac"])
             items.append(d)
+            seq_id += 1
 
         user_map = {}
         if mac_set:
@@ -89,12 +95,12 @@ def api_monitoring():
                 .all()
             )
             user_map = {
-                (u[0] or "").upper(): {"fio": u[1], "phone_number": u[2]} 
+                (u[0] or "").upper(): {"fio": u[1], "phone_number": u[2]}
                 for u in q_users
             }
 
         for d in items:
-            u = user_map.get((d.get("mac") or "").upper())
+            u = user_map.get(d.get("mac",""))
             d["fio"] = u["fio"] if u else "-"
             d["phone_number"] = u["phone_number"] if u else "-"
 
@@ -107,8 +113,8 @@ def api_monitoring():
             "pages": pages,
             "has_prev": page > 1,
             "has_next": page < pages,
-            "sort": sort_col,
-            "order": order_sql,
+            "sort": sort_field,
+            "order": "ASC" if sort_dir == 1 else "DESC",
             "items": items,
         })
 

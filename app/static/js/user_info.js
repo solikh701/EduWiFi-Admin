@@ -98,9 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function statusText(raw){
-    if (raw === 'AKTIV') return 'AKTIV';
-    if (raw === 'NOAKTIV') return "MUDDATI O'TGAN";
-    return '';
+    const s = (raw || '').toUpperCase();
+    if (s === 'AKTIV') return 'AKTIV';
+    if (s === 'NOAKTIV') return "MUDDATI O'TGAN";
+    if (s === 'NOINTERNETPAY') return "TO'LOV YO'Q";
+    return s || '—';
   }
 
   function updateSortUI(){

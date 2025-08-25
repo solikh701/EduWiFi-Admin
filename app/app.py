@@ -47,7 +47,7 @@
 
 # from redis_utils import reload_all_active_tariffs
 
-from redis_utils import reload_all_active_tariffs
+from app.redis_utils import reload_all_active_tariffs
 import os
 from app import create_app
 

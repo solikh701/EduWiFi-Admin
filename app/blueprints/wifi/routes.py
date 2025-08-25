@@ -1,7 +1,10 @@
+import re
 from . import wifi_bp
+from decimal import Decimal
 from ...extensions import db
 from urllib.parse import urlparse
 from flask import jsonify, request
+from datetime import date, timedelta
 from sqlalchemy import func, text, asc, desc
 from ...logging_config import configure_logging
 from ...models import User, Transaction, UserAuthorization
@@ -58,6 +61,34 @@ def _collect_university_users(university_name: str):
             })
     return result
 
+def _parse_amount(v) -> int:
+    if v is None:
+        return 0
+    if isinstance(v, (int, float, Decimal)):
+        try:
+            return int(v)
+        except Exception:
+            return int(float(v))
+    s = re.sub(r"[^\d]", "", str(v))
+    return int(s) if s else 0
+
+
+def _host_filter_sql(col: str, hosts: list[str]):
+    """
+    col: jadvaldagi column nomi (masalan: 'link_login' yoki 't.link_login')
+    hosts: ['mikrotik.turin.uz', ...]
+    """
+    clauses, params = [], {}
+    for i, h in enumerate(hosts):
+        key = f"h{i}"
+        clauses.append(f"LOWER({col}) LIKE :{key}")
+        params[key] = f"%{h.lower()}%"
+    if not clauses:
+        # fallback: nom bo‘yicha (masalan, '%turin%')
+        clauses.append(f"LOWER({col}) LIKE :fallback")
+        params["fallback"] = "%unknown%"
+    return "(" + " OR ".join(clauses) + ")", params
+
 
 @wifi_bp.route('/api/wifi_data', methods=['GET'])
 def get_wifi_data():
@@ -82,69 +113,165 @@ def get_wifi_data():
 @wifi_bp.route('/api/link_login/<string:university_name>/dashboard', methods=['GET'])
 def university_dashboard_data(university_name):
     try:
-        users = _collect_university_users(university_name)
-        macs   = [u["mac"] for u in users if u["mac"]]
-        phones = [u["phone"] for u in users if u["phone"]]
-        hosts  = [u["host"] for u in users if u["host"]]
+        name = (university_name or "").strip().lower()
 
-        # 1) Umumiy ulanishlar (shu universitet userlari)
-        total_connections = 0
-        if macs:
-            total_connections = (
-                db.session.query(func.count(UserAuthorization.id))
-                .filter(UserAuthorization.user_mac.in_(macs))
-                .scalar()
-            ) or 0
+        # Universitetga tegishli foydalanuvchilar va ulardan hostlar
+        users = _collect_university_users(name)  # id, mac, phone, fio, role, link, host
+        hosts = sorted({u["host"] for u in users if u.get("host")})
+        # Agar userlardan topilmasa ham, minimal fallback: '.<name>.'
+        if not hosts:
+            hosts = [f".{name}."]
 
-        # 2) Umumiy WiFi lar soni — host bo‘yicha unikal
-        total_wifi = len(set(hosts))
+        # ===== Top cards =====
+        # 1) Umumiy ulanishlar: user_authorization.link_login bo‘yicha filtr
+        ua_clause, ua_params = _host_filter_sql("link_login", hosts)
+        total_connections = db.session.execute(
+            text(f"SELECT COUNT(*) FROM user_authorization WHERE {ua_clause}"),
+            ua_params
+        ).scalar() or 0
 
-        # 3) Oylik daromad — oxirgi 30 kun ichidagi shu universitet foydalanuvchilari tranzaksiyalari
-        monthly_income = 0
-        if phones:
-            monthly_income = db.session.execute(text("""
-                SELECT COALESCE(SUM(amount),0) FROM `transaction`
-                WHERE phone_number IN :phones
-                AND create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            """), {"phones": tuple(phones) if len(phones) > 1 else tuple(phones) + ('',)}
-            ).scalar() or 0
+        # 2) Kunlik daromad (oxirgi 24 soat, faqat success) — perform_time mavjud bo‘lsa undan, aks holda create_time
+        success_cond = "LOWER(TRIM(COALESCE(status,''))) = 'success'"
+        time_col = "COALESCE(perform_time, create_time)"
+        tx_clause, tx_params = _host_filter_sql("link_login", hosts)
 
-        # 4) Ulanishlar grafigi (oylar bo‘yicha)
-        connections_chart = []
-        if macs:
-            rows = db.session.query(
-                func.year(UserAuthorization.authorization_date).label('y'),
-                func.month(UserAuthorization.authorization_date).label('m'),
-                func.count(UserAuthorization.id)
-            ).filter(
-                UserAuthorization.user_mac.in_(macs)
-            ).group_by('y', 'm').order_by('y', 'm').all()
-            # faqat count larni qaytaramiz
-            connections_chart = [r[2] for r in rows]
+        rows_24h = db.session.execute(text(
+            f"""
+            SELECT amount FROM `transaction`
+            WHERE {time_col} >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+              AND {success_cond}
+              AND {tx_clause}
+            """
+        ), tx_params).fetchall()
+        daily_income = sum(_parse_amount(a) for (a,) in rows_24h)
 
-        # 5) WiFi bo‘yicha tushum (host => sum)
-        wifi_income_data = []
-        if phones and hosts:
-            # telefon raqami bo‘yicha jami tushum (hostni userdan olamiz)
-            income_by_host = {}
-            for h in set(hosts):
-                income_by_host[h] = 0
+        # 3) Oylik daromad (oxirgi 30 kun, faqat success)
+        rows_30d = db.session.execute(text(
+            f"""
+            SELECT amount FROM `transaction`
+            WHERE {time_col} >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+              AND {success_cond}
+              AND {tx_clause}
+            """
+        ), tx_params).fetchall()
+        monthly_income = sum(_parse_amount(a) for (a,) in rows_30d)
 
-            # Har bir user telefoni bo‘yicha sum olib, uning hostiga qo‘shamiz
-            for u in users:
-                pn = u["phone"]
-                h  = u["host"]
-                if not pn or not h:
-                    continue
-                amt = db.session.execute(text("""
-                    SELECT COALESCE(SUM(amount),0) FROM `transaction` WHERE phone_number=:pn
-                """), {"pn": pn}).scalar() or 0
-                income_by_host[h] += amt
+        # ===== Ulanishlar: Yil/Oy/Kun (faqat shu universitet) =====
+        today = date.today()
+        uz_mon = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek']
 
-            wifi_income_data = [{"name": host, "value": val} for host, val in income_by_host.items()]
+        # Day (7 kun)
+        day_rows = db.session.execute(text(
+            f"""
+            SELECT DATE(authorization_date) AS d, COUNT(*) AS cnt
+            FROM user_authorization
+            WHERE authorization_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+              AND {ua_clause}
+            GROUP BY d ORDER BY d
+            """
+        ), ua_params).fetchall()
+        day_map = {d.strftime("%Y-%m-%d"): int(cnt) for d, cnt in day_rows}
+        last7 = [today - timedelta(days=i) for i in range(6, -1, -1)]
+        day_labels = [str(d.day) for d in last7]
+        day_keys   = [d.strftime("%Y-%m-%d") for d in last7]
+        day_data   = [day_map.get(k, 0) for k in day_keys]
 
-        # 6) So‘nggi 5 ta foydalanuvchi (shu universitet userlari)
-        #    id bo‘yicha eng oxirgilari
+        # Month (joriy yil 12 oy)
+        mon_rows = db.session.execute(text(
+            f"""
+            SELECT MONTH(authorization_date) AS m, COUNT(*) AS cnt
+            FROM user_authorization
+            WHERE YEAR(authorization_date) = YEAR(CURDATE())
+              AND {ua_clause}
+            GROUP BY m ORDER BY m
+            """
+        ), ua_params).fetchall()
+        mon_map = {int(m): int(cnt) for m, cnt in mon_rows}
+        mon_labels = uz_mon
+        mon_data = [mon_map.get(i+1, 0) for i in range(12)]
+
+        # Year (oxirgi 5 yil)
+        yr_rows = db.session.execute(text(
+            f"""
+            SELECT YEAR(authorization_date) AS y, COUNT(*) AS cnt
+            FROM user_authorization
+            WHERE authorization_date >= DATE_SUB(CURDATE(), INTERVAL 4 YEAR)
+              AND {ua_clause}
+            GROUP BY y ORDER BY y
+            """
+        ), ua_params).fetchall()
+        this_year = today.year
+        year_labels = [str(this_year - 4 + i) for i in range(5)]
+        yr_map = {str(int(y)): int(cnt) for y, cnt in yr_rows}
+        year_data = [yr_map.get(lbl, 0) for lbl in year_labels]
+
+        connections_series = {
+            "day":   {"labels": day_labels,  "data": day_data},
+            "month": {"labels": mon_labels,  "data": mon_data},
+            "year":  {"labels": year_labels, "data": year_data},
+        }
+
+        # ===== Tushum dinamikasi (faqat shu universitet, faqat success) =====
+        # Bar chart stacked (1 dataset: universitet)
+        uni_label = name.capitalize()
+
+        # Day (7 kun)
+        tx_day = db.session.execute(text(
+            f"""
+            SELECT amount, DATE({time_col}) AS d
+            FROM `transaction`
+            WHERE {time_col} >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+              AND {success_cond}
+              AND {tx_clause}
+            """
+        ), tx_params).fetchall()
+        day_amount_map = {k: 0 for k in day_keys}
+        for amt, d in tx_day:
+            key = d.strftime("%Y-%m-%d")
+            if key in day_amount_map:
+                day_amount_map[key] += _parse_amount(amt)
+        uni_day_series = [day_amount_map[k] for k in day_keys]
+
+        # Month (joriy yil 12 oy)
+        tx_mon = db.session.execute(text(
+            f"""
+            SELECT amount, MONTH({time_col}) AS m
+            FROM `transaction`
+            WHERE YEAR({time_col}) = YEAR(CURDATE())
+              AND {success_cond}
+              AND {tx_clause}
+            """
+        ), tx_params).fetchall()
+        mon_amounts = [0]*12
+        for amt, m in tx_mon:
+            idx = int(m) - 1
+            if 0 <= idx < 12:
+                mon_amounts[idx] += _parse_amount(amt)
+
+        # Year (oxirgi 5 yil)
+        tx_yr = db.session.execute(text(
+            f"""
+            SELECT amount, YEAR({time_col}) AS y
+            FROM `transaction`
+            WHERE {time_col} >= DATE_SUB(CURDATE(), INTERVAL 4 YEAR)
+              AND {success_cond}
+              AND {tx_clause}
+            """
+        ), tx_params).fetchall()
+        year_index = {int(y): i for i, y in enumerate(range(this_year-4, this_year+1))}
+        yr_amounts = [0]*5
+        for amt, y in tx_yr:
+            y = int(y)
+            if y in year_index:
+                yr_amounts[year_index[y]] += _parse_amount(amt)
+
+        income_dynamic = {
+            "day":   {"labels": day_labels,  "series": {uni_label: uni_day_series}},
+            "month": {"labels": mon_labels,  "series": {uni_label: mon_amounts}},
+            "year":  {"labels": year_labels, "series": {uni_label: yr_amounts}},
+        }
+
+        # ===== Yangi foydalanuvchilar (shu universitet) =====
         uni_ids = [u["id"] for u in users]
         new_accounts_data = []
         if uni_ids:
@@ -164,33 +291,36 @@ def university_dashboard_data(university_name):
                     "username": u.phone_number
                 })
 
-        # 7) So‘nggi 5 tranzaksiya (shu universitet foydalanuvchilari)
+        # ===== So‘nggi tranzaksiyalar (shu universitet) =====
         recent_transactions_data = []
-        if phones:
-            recents = (
-                db.session.query(Transaction)
-                .filter(Transaction.phone_number.in_(phones))
-                .order_by(Transaction.id.desc())
-                .limit(5).all()
-            )
-            for t in recents:
-                recent_transactions_data.append({
-                    "id": t.id,
-                    "date": str(t.create_time),
-                    "amount": t.amount,
-                    "status": t.status,
-                    "desc": t.reason
-                })
+        recents = db.session.execute(text(
+            f"""
+            SELECT id, {time_col} AS t, amount, status, reason
+            FROM `transaction`
+            WHERE {tx_clause}
+            ORDER BY id DESC
+            LIMIT 5
+            """
+        ), tx_params).fetchall()
+        for rid, t, amount, status, reason in recents:
+            recent_transactions_data.append({
+                "id": rid,
+                "date": str(t),
+                "amount": _parse_amount(amount),
+                "status": status,
+                "desc": reason
+            })
 
         return jsonify({
-            "total_connections": total_connections,
-            "total_wifi": total_wifi,
-            "monthly_income": monthly_income,
-            "connections_chart": connections_chart,
-            "wifi_income_data": wifi_income_data,
+            "total_connections": int(total_connections),
+            "daily_income": int(daily_income),
+            "monthly_income": int(monthly_income),
+            "connections_series": connections_series,
+            "income_dynamic": income_dynamic,
             "new_accounts": new_accounts_data,
             "recent_transactions": recent_transactions_data
         }), 200
+
     except Exception as e:
         logger.exception("university_dashboard_data failed")
         return jsonify({"error": "internal"}), 500
@@ -276,7 +406,7 @@ def university_users_data(university_name):
 
 @wifi_bp.route('/api/link_login/<string:university_name>/transactions', methods=['GET'])
 def university_transactions_data(university_name):
-    """Paginated + sort + search — faqat ushbu universitet userlari tranzaksiyalari"""
+    """Paginated + sort + search — Transaction.link_login URL ichida universitet nomiga qarab"""
     try:
         page  = max(int(request.args.get('page', 1)), 1)
         limit = min(max(int(request.args.get('limit', 20)), 1), 200)
@@ -284,25 +414,21 @@ def university_transactions_data(university_name):
         order = (request.args.get('order') or 'desc').lower()
         q     = (request.args.get('q') or '').strip()
 
-        users = _collect_university_users(university_name)
-        phones = [u["phone"] for u in users if u["phone"]]
-        if not phones:
-            return jsonify({"total": 0, "page": page, "limit": limit, "pages": 0, "items": []}), 200
+        qry = db.session.query(Transaction).filter(
+            Transaction.link_login.ilike(f"%{university_name}%")
+        )
 
-        qry = db.session.query(Transaction).filter(Transaction.phone_number.in_(phones))
-
-        # search: id/amount/status/desc/phone
         if q:
             like = f"%{q}%"
             qry = qry.filter(
                 (Transaction.phone_number.ilike(like)) |
-                (Transaction.amount.ilike(like)) |
+                (Transaction.amount.cast(db.String).ilike(like)) |
                 (Transaction.status.ilike(like)) |
                 (Transaction.reason.ilike(like)) |
-                (Transaction.transaction_id.ilike(like))
+                (Transaction.transaction_id.ilike(like)) |
+                (Transaction.id.cast(db.String).ilike(like))
             )
 
-        # sort mapping
         sortmap = {
             "id": Transaction.id,
             "date": Transaction.create_time,
@@ -318,12 +444,13 @@ def university_transactions_data(university_name):
 
         rows = [{
             "id": t.id,
-            "date": str(t.create_time),
+            "date": t.create_time.strftime("%Y-%m-%d %H:%M:%S") if t.create_time else "",
             "amount": t.amount,
             "status": t.status,
             "desc": t.reason,
             "phone_number": t.phone_number,
-            "transaction_id": t.transaction_id
+            "transaction_id": t.transaction_id,
+            "link_login": t.link_login
         } for t in items]
 
         return jsonify({
@@ -333,6 +460,7 @@ def university_transactions_data(university_name):
             "pages": (total + limit - 1) // limit,
             "items": rows
         }), 200
+
     except Exception:
         logger.exception("university_transactions_data failed")
         return jsonify({"total": 0, "page": 1, "limit": 20, "pages": 0, "items": []}), 500
